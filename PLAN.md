@@ -119,7 +119,7 @@ Memory file:
 | `create_memory_store(memory_store, directories=[])` | Creates the memory_store (parents like `mkdir -p`), its declared directories and its marker. Idempotent; a repeat call adds new directories. |
 | `list_memories(memory_store="", path="")` | Nested memory_stores and directories; per memory `path · description · active facts · updated`; per document `path · bytes · modified`. `memory_store=""` lists the root's top-level memory_stores. |
 | `read_memories(memory_store, paths[], ids=true)` | Memories rendered as above, documents verbatim. |
-| `apply_memory_ops(memory_store, ops[])` | Batch of `{op: add\|update\|retire\|write_doc, path, id?, text?, description?}`. `add` creates the memory when missing (`description` required then). `write_doc` creates or replaces a document with `text`. Returns each op's outcome and new ids. |
+| `apply_memory_ops(memory_store, ops[])` | Batch of `{op: add\|update\|retire\|describe\|write_doc, path, id?, text?, description?}`. `add` creates the memory when missing (`description` required then). `write_doc` creates or replaces a document with `text`. Returns each op's outcome and new ids. |
 
 Core only (not an MCP tool): `move_memory_store(old, new)`, for project renames.
 
