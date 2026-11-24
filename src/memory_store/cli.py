@@ -44,11 +44,21 @@ def _parser() -> argparse.ArgumentParser:
     apply = commands.add_parser("apply", help="apply a JSON list of ops (from --ops or stdin)")
     apply.add_argument("memory_store")
     apply.add_argument("--ops", help='e.g. \'[{"op": "add", "path": "decisions", "text": "..."}]\'')
+    tui = commands.add_parser("tui", help="browse and edit every root in the terminal (needs the tui extra)")
+    tui.add_argument("roots", nargs="*", metavar="root", help="roots or globs (default: ~/.config/memory-store/roots)")
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.command == "tui":
+        try:
+            from memory_store import tui
+        except ModuleNotFoundError:
+            print("error: the tui needs textual: uv tool install 'memory-store[tui] @ git+…'", file=sys.stderr)
+            return 1
+        tui.main([args.root] if args.root else args.roots)
+        return 0
     try:
         if args.command == "create":
             created = store.create_memory_store(args.memory_store, args.directories, root=args.root)
