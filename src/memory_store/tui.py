@@ -108,8 +108,9 @@ class MemoryBrowser(App[None]):
     #panes { height: 1fr; }
     #tree, #entries, #detail { border: round $surface-lighten-2; border-title-color: $text-muted; padding: 0 1; }
     #tree:focus-within, #entries:focus-within, #detail:focus-within { border: round $accent; border-title-color: $accent; }
-    #tree { width: 24%; min-width: 24; }
-    #entries { width: 42%; }
+    #side { width: 36%; min-width: 30; max-width: 60; }
+    #tree { height: 2fr; }
+    #entries { height: 3fr; }
     #detail { width: 1fr; }
     Tree, DataTable, ListView, Markdown { background: transparent; }
     DataTable > .datatable--header { text-style: none; color: $text-muted; background: transparent; }
@@ -155,10 +156,11 @@ class MemoryBrowser(App[None]):
     def compose(self) -> ComposeResult:
         yield Input(placeholder="filter memories and facts in all roots", id="filter")
         with Horizontal(id="panes"):
-            with Vertical(id="tree"):
-                yield Tree("roots", id="places")
-            with Vertical(id="entries"):
-                yield DataTable(id="table", cursor_type="row", zebra_stripes=False)
+            with Vertical(id="side"):
+                with Vertical(id="tree"):
+                    yield Tree("roots", id="places")
+                with Vertical(id="entries"):
+                    yield DataTable(id="table", cursor_type="row", zebra_stripes=False)
             with Vertical(id="detail"), ContentSwitcher(initial="empty", id="switch"):
                 yield Static("", id="empty")
                 yield ListView(id="facts")
@@ -171,7 +173,7 @@ class MemoryBrowser(App[None]):
         self.query_one("#entries").border_title = "memories"
         self.query_one("#detail").border_title = "facts"
         table = self.query_one(DataTable)
-        table.add_columns("memory", "facts", "updated", "description")
+        table.add_columns("memory", "facts", "description")
         self.build_tree()
         self.query_one(Tree).focus()
 
@@ -211,7 +213,7 @@ class MemoryBrowser(App[None]):
             self.add_directories(child, child_place, self.listing(child_place)["directories"])
             child.allow_expand = bool(child.children)
 
-    def entries_of(self, place: Place) -> list[tuple[Entry, tuple[str, str, str, str]]]:
+    def entries_of(self, place: Place) -> list[tuple[Entry, tuple[str, str, str]]]:
         """The memories and documents at a place and in the directories below it."""
         if not place.memory_store:
             return []
@@ -220,10 +222,10 @@ class MemoryBrowser(App[None]):
         rows = []
         for memory in listing["memories"]:
             description = "unreadable" if memory.get("error") else memory["description"]
-            cells = (memory["path"][prefix:], str(memory["facts"]), day(memory["updated"]), description)
+            cells = (memory["path"][prefix:], str(memory["facts"]), description)
             rows.append((Entry(place, memory["path"], False), cells))
         for document in listing["documents"]:
-            cells = (document["path"][prefix:], "", day(document["modified"]), "[dim]document[/dim]")
+            cells = (document["path"][prefix:], "", "[dim]document[/dim]")
             rows.append((Entry(place, document["path"], True), cells))
         for directory in listing["directories"]:
             below = self.entries_of(Place(place.root, place.memory_store, directory))
@@ -242,7 +244,7 @@ class MemoryBrowser(App[None]):
         walk(self.query_one(Tree).root)
         return places
 
-    def show_entries(self, rows: list[tuple[Entry, tuple[str, str, str, str]]], title: str, keep: int = 0) -> None:
+    def show_entries(self, rows: list[tuple[Entry, tuple[str, str, str]]], title: str, keep: int = 0) -> None:
         table = self.query_one(DataTable)
         table.clear()
         self.entries = [entry for entry, _ in rows]
@@ -325,7 +327,7 @@ class MemoryBrowser(App[None]):
         rows = []
         for place in self.all_places():
             for entry, cells in self.entries_of(place):
-                text = f"{cells[0]} {cells[3]}"
+                text = f"{cells[0]} {cells[2]}"
                 if not entry.document:
                     try:
                         memory = store.read_memory(place.memory_store, entry.path, root=place.root)
